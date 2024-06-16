@@ -2,6 +2,9 @@ package Dao;
 
 import Model.User;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -16,6 +19,10 @@ public class DAO {
             e.printStackTrace();
         }
     }
+
+
+
+    //ham connection
     public ArrayList<User> getAllUser() {
         ArrayList<User> ls = new ArrayList<>();
         String sql = "SELECT * FROM User";
@@ -35,6 +42,7 @@ public class DAO {
         }
         return ls;
     }
+
     public User getUserInfo(String nameLogin){
         String sql = "Select * from User where NameLogin = ?";
         User user = null;
@@ -87,5 +95,40 @@ return user;
 
     }
         return false;
+    }
+
+    public boolean login(String NameLogin, String password){
+        try {
+            // Hash the password
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(password.getBytes());
+            byte[] bytes = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bytes.length; i++) {
+                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            password = sb.toString();
+
+            // Now, compare the hashed password with the hashed password in the database
+            String query = "SELECT * FROM user WHERE NameLogin = ? AND Password = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, NameLogin);
+            stmt.setString(2, password);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+
+                return true;
+            }
+        } catch (NoSuchAlgorithmException | SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+
+
+    public Connection getConnection() {
+        return conn;
     }
 }

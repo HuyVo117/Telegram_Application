@@ -48,6 +48,7 @@
                     <properties>
                       <contentType value="text/html"/>
                       <editable value="false"/>
+                      <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
                     </properties>
                   </component>
                 </children>
@@ -135,7 +136,14 @@
                       <text value="Setting"/>
                     </properties>
                   </component>
-                  <component id="77606" class="javax.swing.JButton" binding="micro">
+                  <component id="77606" class="javax.swing.JButton" binding="SendImage">
+                    <constraints/>
+                    <properties>
+                      <icon value="img/image-regular-24.png"/>
+                      <text value=""/>
+                    </properties>
+                  </component>
+                  <component id="d2c1" class="javax.swing.JButton" binding="micro">
                     <constraints/>
                     <properties>
                       <icon value="img/microphone-solid-24.png"/>

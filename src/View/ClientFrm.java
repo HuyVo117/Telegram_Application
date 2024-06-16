@@ -6,7 +6,11 @@ import Thread.WriteThread;
 import Thread.ReadThread;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
@@ -33,6 +37,7 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
     private JPanel topPanel;
     private JList jListUsers;
     private JLabel txtServerDetail;
+    private JButton SendImage;
     private JButton micro;
     private HTMLDocument doc ;
     private ServerListFrm serverList;
@@ -43,6 +48,10 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
     private User currentUser;
     private ArrayList<User> listUser;
     private ObjectOutputStream writer;
+    private boolean isImageFile(File file){
+        String name  = file.getName().toLowerCase();
+        return name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".gif");
+    }
 
     public boolean isLineBreak() {
         return lineBreak;
@@ -113,7 +122,7 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
         userListModel = new DefaultListModel<>(); // tạo danh sách người dùng
         jListUsers.setModel(userListModel); // hiển thị danh sách người dùng
         jListUsers.setCellRenderer(new UserRendered(currentUser));
- 
+
 
         jListUsers.addListSelectionListener(e -> {
             System.out.println("state change!");
@@ -122,11 +131,11 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
             // find message for selected user
             User selectedUser = ((User) jListUsers.getSelectedValue());
 
-            if(selectedUser != null) {
+            if (selectedUser != null) {
                 lbName.setText(selectedUser.getName());
                 status.setText("Online");
 
-                if(selectedUser.getHasNewMessage() == true) {
+                if (selectedUser.getHasNewMessage() == true) {
                     selectedUser.setHasNewMessage(false);
                     updateUserList();
                     return;
@@ -134,77 +143,73 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
                 String selectedUserId = selectedUser.getId();
                 Message[] listMessages = MessageStore.findMessageForUser(selectedUserId);
-                if(listMessages != null) {
-                    for (Message msg: listMessages) {
+                if (listMessages != null) {
+                    for (Message msg : listMessages) {
 
-                        if(selectedUserId.equals(msg.getFrom())) {
+                        if (selectedUserId.equals(msg.getFrom())) {
                             try {
-                                if(msg.getPayload().equals("(y)")) {
+                                if (msg.getPayload().equals("(y)")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/like.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() +": </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals("^_^")) {
+                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() + ": </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals("^_^")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/smile.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() +": </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals(">:0")) {
+                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() + ": </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals(">:0")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/happy.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() +": </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals(":(")) {
+                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() + ": </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals(":(")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/sad.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() +": </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals(":O")) {
+                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() + ": </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals(":O")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/shocked.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() +": </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                }
-                                else {
+                                            "<div><pre>" + "<span style='color: red;'>" + selectedUser.getName() + ": </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else {
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
                                             "<div style='background-color: #ebebeb; margin: 0 0 10px 0;'><pre style='color: #000;'>"
                                                     + "<span style='color: red;'>" + selectedUser.getName() + ": </span>" + (String) msg.getPayload() + "</pre></div><br/>");
                                 }
-                            }
-                            catch (BadLocationException | IOException badLocationException) {
+                            } catch (BadLocationException | IOException badLocationException) {
                                 badLocationException.printStackTrace();
                             }
                         } else {
                             try {
-                                if(msg.getPayload().equals("(y)")) {
+                                if (msg.getPayload().equals("(y)")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/like.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals("^_^")) {
+                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals("^_^")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/smile.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals(">:0")) {
+                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals(">:0")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/happy.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals(":(")) {
+                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals(":(")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/sad.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                } else if(msg.getPayload().equals(":O")) {
+                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else if (msg.getPayload().equals(":O")) {
                                     String url = ClientFrm.class.getClassLoader().getResource("img/shocked.png").toString();
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
-                                }
-                                else {
+                                            "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
+                                } else {
                                     doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
                                             "<div style='background-color: #05728F; margin: 0 0 10px 0;'><pre style='color: #fff'>"
                                                     + "<span style='color: yellow;'>you: </span>" + (String) msg.getPayload() + "</pre></div><br/>");
                                 }
-                            }
-                            catch (BadLocationException | IOException badLocationException) {
+                            } catch (BadLocationException | IOException badLocationException) {
                                 badLocationException.printStackTrace();
                             }
                         }
                     }
                     validate();
-                    sb.setValue( sb.getMaximum() );
+                    sb.setValue(sb.getMaximum());
                 }
             }
         });
@@ -216,7 +221,7 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
         writeThread.start();
         btnSend.addActionListener(e -> {
             String content = txtMessage.getText();
-            if(!content.equals("")) {
+            if (!content.equals("")) {
                 String to = ((User) jListUsers.getSelectedValue()).getId();
                 Message privateMessage = new Message("PRIVATE_MESSAGE", content, currentUser.getId(), to);
                 Thread privateThread = new Thread(new WriteThread(s, ClientFrm.this, currentUser, privateMessage, writer));
@@ -234,7 +239,7 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
                 MessageStore.saveMessage(to, privateMessage);
 
 
-                MessageArea.setCaretPosition(MessageArea.getDocument().getLength());
+                MessageArea.setCaretPosition(MessageArea.getDocument().getLength()); // di chuyển con trỏ đến cuối văn bản
 
             }
         });
@@ -253,13 +258,13 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
             try {
                 doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                        "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
+                        "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
             } catch (BadLocationException | IOException badLocationException) {
                 badLocationException.printStackTrace();
             }
             MessageStore.saveMessage(to, privateMessage);
             validate();
-            sb.setValue( sb.getMaximum() );
+            sb.setValue(sb.getMaximum());
         });
         btnSmile.addActionListener(e -> {
             String content = "^_^";
@@ -273,13 +278,13 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
             try {
                 doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                        "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
+                        "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
             } catch (BadLocationException | IOException badLocationException) {
                 badLocationException.printStackTrace();
             }
             MessageStore.saveMessage(to, privateMessage);
             validate();
-            sb.setValue( sb.getMaximum() );
+            sb.setValue(sb.getMaximum());
         });
         btnHappy.addActionListener(e -> {
             String content = ">:0";
@@ -293,14 +298,14 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
             try {
                 doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                        "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
+                        "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
             } catch (BadLocationException | IOException badLocationException) {
                 badLocationException.printStackTrace();
             }
 
             MessageStore.saveMessage(to, privateMessage);
             validate();
-            sb.setValue( sb.getMaximum() );
+            sb.setValue(sb.getMaximum());
         });
         btnSad.addActionListener(e -> {
             String content = ":(";
@@ -314,13 +319,13 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
             try {
                 doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                        "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
+                        "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
             } catch (BadLocationException | IOException badLocationException) {
                 badLocationException.printStackTrace();
             }
             MessageStore.saveMessage(to, privateMessage);
             validate();
-            sb.setValue( sb.getMaximum() );
+            sb.setValue(sb.getMaximum());
         });
         btnShock.addActionListener(e -> {
             String content = ":O";
@@ -334,16 +339,16 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
             try {
                 doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()),
-                        "<div><pre>" + "<span style='color: #000;'>you: </span>" +"<img src='"+ url + "'/></pre></div><br/>");
+                        "<div><pre>" + "<span style='color: #000;'>you: </span>" + "<img src='" + url + "'/></pre></div><br/>");
             } catch (BadLocationException | IOException badLocationException) {
                 badLocationException.printStackTrace();
             }
             MessageStore.saveMessage(to, privateMessage);
             validate();
-            sb.setValue( sb.getMaximum() );
+            sb.setValue(sb.getMaximum());
         });
         fileButton.addActionListener(e -> {
-            User selectedUser =  ((User) jListUsers.getSelectedValue());
+            User selectedUser = ((User) jListUsers.getSelectedValue());
             SendFileFrm frm = new SendFileFrm(ClientFrm.this, socket, writer,
                     selectedUser, currentUser, rootPaneCheckingEnabled);
             frm.setVisible(true);
@@ -360,10 +365,10 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_ENTER && !lineBreak) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && !lineBreak) {
                     e.consume();
                     String content = txtMessage.getText();
-                    if(!content.equals("")) {
+                    if (!content.equals("")) {
                         String to = ((User) jListUsers.getSelectedValue()).getId();
                         Message privateMessage = new Message("PRIVATE_MESSAGE", content, currentUser.getId(), to);
                         Thread privateThread = new Thread(new WriteThread(s, ClientFrm.this, currentUser, privateMessage, writer));
@@ -380,7 +385,7 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
 
                         MessageStore.saveMessage(to, privateMessage);
                         validate();
-                        sb.setValue( sb.getMaximum() );
+                        sb.setValue(sb.getMaximum());
                     }
                 }
             }
@@ -389,14 +394,132 @@ public class ClientFrm extends JFrame{ // tạo giao diện cho client
             public void keyReleased(KeyEvent e) {
             }
         });
+        // thêm chức năng gửi ảnh
+        SendImage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Chọn file để gửi");
+                fileChooser.setMultiSelectionEnabled(true); // Cho phép chọn nhiều file
+
+                fileChooser.setFileFilter(new FileFilter() {
+                    @Override
+                    public boolean accept(File f) {
+                        // Chấp nhận thư mục hoặc file có phần mở rộng là hình ảnh
+                        if (f.isDirectory()) {
+                            return true;
+                        }
+                        String extension = getFileExtension(f);
+                        return extension != null && isImageExtension(extension);
+                    }
+
+                    @Override
+                    public String getDescription() {
+                        return "Image Files (jpg, jpeg, png, gif)";
+                    }
+
+                    private String getFileExtension(File file) {
+                        String fileName = file.getName();
+                        int dotIndex = fileName.lastIndexOf('.');
+                        if (dotIndex > 0 && dotIndex < fileName.length() - 1) {
+                            return fileName.substring(dotIndex + 1).toLowerCase();
+                        }
+                        return null;
+                    }
+
+                    private boolean isImageExtension(String extension) {
+                        return extension.equals("jpg") || extension.equals("jpeg") || extension.equals("png") || extension.equals("gif");
+                    }
+                });
+
+                int option = fileChooser.showOpenDialog(ClientFrm.getFrames()[0]); // Mở dialog chọn file
+                if (option == JFileChooser.APPROVE_OPTION) { // Nếu chọn file thì
+                    File[] files = fileChooser.getSelectedFiles(); // Lấy file đã chọn
+                    for (File file : files) {
+                        if (isImageFile(file)) { // Kiểm tra file có phải là ảnh không
+                            try {
+                                FileInputStream fileInputStream = new FileInputStream(file); // Đọc file
+                                byte[] fileContent = new byte[(int) file.length()]; // Chuyển nội dung file sang byte
+                                fileInputStream.read(fileContent); // Đọc nội dung file
+                                fileInputStream.close(); // Đóng file
+                                String fileName = file.getName(); // Lấy tên file
+                                byte[] fileNameBytes = fileName.getBytes(); // Chuyển tên file sang byte
+
+                                // Tạo đối tượng ImageIcon từ file
+                                ImageIcon imageIcon = new ImageIcon(file.getAbsolutePath());
+
+                                // Chèn hình ảnh vào JTextPane
+                                StyledDocument doc = MessageArea.getStyledDocument();
+                                Style style = doc.addStyle("StyleName", null);
+                                StyleConstants.setIcon(style, imageIcon);
+                                doc.insertString(doc.getLength(), "ignored text", style);
+
+                                // Gửi file
+                                String to = ((User) jListUsers.getSelectedValue()).getId(); // Lấy id người nhận
+                                Message privateMessage = new Message("PRIVATE_FILE_MESSAGE", "file", currentUser.getId(), to); // Tạo tin nhắn gửi file
+                                Thread privateThread = new Thread(() -> {
+                                    try {
+                                        writer.writeObject(privateMessage); // Gửi tin nhắn
+                                        writer.flush(); // Xóa bộ đệm
+                                        writer.writeInt(fileNameBytes.length); // Gửi độ dài tên file
+                                        writer.flush(); // Xóa bộ đệm
+                                        writer.write(fileNameBytes); // Gửi tên file
+                                        writer.flush(); // Xóa bộ đệm
+                                        writer.writeInt(fileContent.length); // Gửi độ dài nội dung file
+                                        writer.flush(); // Xóa bộ đệm
+                                        writer.write(fileContent); // Gửi nội dung file
+                                        writer.flush(); // Xóa bộ đệm
+                                    } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                    }
+                                });
+                                privateThread.start(); // Bắt đầu gửi file
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            } catch (BadLocationException e1) {
+                                e1.printStackTrace();
+                            }
+                        } else {
+                            JOptionPane.showMessageDialog(ClientFrm.getFrames()[0], "File không phải là ảnh"); // Thông báo file không phải là ảnh
+                        }
+                    }
+                }
+            }
+
+            private boolean isImageFile(File file) {
+                String extension = getFileExtension(file);
+                return extension != null && isImageExtension(extension);
+            }
+
+            private String getFileExtension(File file) {
+                String fileName = file.getName();
+                int dotIndex = fileName.lastIndexOf('.');
+                if (dotIndex > 0 && dotIndex < fileName.length() - 1) {
+                    return fileName.substring(dotIndex + 1).toLowerCase();
+                }
+                return null;
+            }
+
+            private boolean isImageExtension(String extension) {
+                return extension.equals("jpg") || extension.equals("jpeg") || extension.equals("png") || extension.equals("gif");
+            }
+        });
+
+
         micro.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
-
-
+                if (micro.getText().equals("Mute")) {
+                    micro.setText("Unmute");
+                    micro.setIcon(new ImageIcon(getClass().getResource("/img/micro.png")));
+                } else {
+                    micro.setText("Mute");
+                    micro.setIcon(new ImageIcon(getClass().getResource("/img/micro-mute.png")));
+                }
             }
         });
+
+
     }
 
 

@@ -46,7 +46,7 @@ private ServerFrm serverFrm;
                 request = (Message) in.readObject();  // Đọc dữ liệu từ client
                 if (request.getType().equals("SESSION")){ // Nếu dữ liệu từ client là SESSION thì thực hiện
                     currentUser = (User) request.getPayload();
-                    serverFrm.ServerLogAppend("A user with id : "+currentUser.getId()+" has connected");
+                    serverFrm.ServerLogAppend("A user with id : "+currentUser.getId()+" has connected ");
 
                     String address = ((InetSocketAddress) client.getRemoteSocketAddress()).getAddress().toString(); // Lấy địa chỉ IP của client
                     Client cl = new Client(address,this.client.getPort(), currentUser.getName(), currentUser.getId()); // Tạo một client mới
@@ -160,18 +160,15 @@ private ServerFrm serverFrm;
         for (ClientThread client : clients){ // Duyệt qua danh sách client
             if (client.getUser().getId().equals(userID)){ // Nếu client có id trùng với id của người nhận
                 ObjectOutputStream outStream = client.getObjectOutputStream(); // Lấy ObjectOutputStream của client
-                Thread forwardFileThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try{
-                            outStream.writeInt(fileNameBytes.length);  // Gửi độ dài của tên file
-                            outStream.write(fileNameBytes); // Gửi tên file
-                            outStream.writeInt(fileContentBytes.length); // Gửi độ dài của nội dung file
-                            outStream.write(fileContentBytes); //  Gửi nội dung file
-                            outStream.flush();
-                        } catch (IOException e){
-                            e.printStackTrace();
-                        }
+                Thread forwardFileThread = new Thread(() -> {
+                    try{
+                        outStream.writeInt(fileNameBytes.length);  // Gửi độ dài của tên file
+                        outStream.write(fileNameBytes); // Gửi tên file
+                        outStream.writeInt(fileContentBytes.length); // Gửi độ dài của nội dung file
+                        outStream.write(fileContentBytes); //  Gửi nội dung file
+                        outStream.flush();
+                    } catch (IOException e){
+                        e.printStackTrace();
                     }
                 });
                 forwardFileThread.start();
